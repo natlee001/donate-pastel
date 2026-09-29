@@ -1,7 +1,379 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Donate Overlay</title><style>*{box-sizing:border-box}body{margin:0;background:transparent;font-family:Arial,sans-serif;overflow:hidden}.alert{position:absolute;right:30px;bottom:30px;width:420px;padding:22px 24px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(242,231,255,.96));border:2px solid rgba(181,151,233,.55);box-shadow:0 18px 60px rgba(76,45,110,.28);opacity:0;transform:translateY(20px) scale(.98);transition:.35s}.alert.show{opacity:1;transform:none}.top{font-size:18px;font-weight:800;color:#7653b4}.amount{font-size:28px;font-weight:900;color:#9a6bd2;margin:6px 0}.msg{font-size:18px;color:#49395a;line-height:1.45;word-break:break-word}.small{font-size:12px;color:#8a7b9a;margin-top:8px}</style></head><body><div class="alert" id="a"><div class="top" id="n">💜 Có donate mới!</div><div class="amount" id="m">0đ</div><div class="msg" id="c"></div><div class="small">Cảm ơn bạn đã ủng hộ ✨</div></div><script>
-let last=localStorage.getItem('lastDonationId')||'';let busy=false;let initialized=!!last;
-async function check(){if(busy)return;try{const r=await fetch('/api/latest?overlay=1&ts='+Date.now());const d=await r.json();const x=d.latest;if(!x||String(x.id)===last)return;if(!initialized){last=String(x.id);localStorage.setItem('lastDonationId',last);initialized=true;return;}last=String(x.id);localStorage.setItem('lastDonationId',last);show(x)}catch(e){}}
-function show(x){busy=true;document.getElementById('n').textContent='💜 '+(x.name||'Một người bạn')+' đã donate';document.getElementById('m').textContent=Number(x.amount||0).toLocaleString('vi-VN')+'đ';document.getElementById('c').textContent=x.content||'';const a=document.getElementById('a');a.classList.add('show');speak(x.content||'');setTimeout(()=>{a.classList.remove('show');busy=false},10000)}
-function speak(t){if(!t)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='vi-VN';u.rate=1;u.pitch=1;speechSynthesis.speak(u)}catch(e){}}
-check();setInterval(check,3000);
-</script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Donate Overlay</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  background:transparent;
+  overflow:hidden;
+  font-family:Arial,sans-serif;
+}
+
+.alert{
+  position:absolute;
+  right:30px;
+  bottom:30px;
+  width:420px;
+  padding:22px 24px;
+  border-radius:24px;
+
+  background:linear-gradient(
+    135deg,
+    rgba(255,255,255,.97),
+    rgba(242,231,255,.97)
+  );
+
+  border:2px solid rgba(181,151,233,.55);
+
+  box-shadow:
+    0 18px 60px rgba(76,45,110,.28);
+
+  opacity:0;
+  visibility:hidden;
+
+  transform:
+    translateY(25px)
+    scale(.96);
+
+  transition:
+    opacity .4s ease,
+    transform .4s ease,
+    visibility .4s;
+}
+
+.alert.show{
+  opacity:1;
+  visibility:visible;
+  transform:
+    translateY(0)
+    scale(1);
+}
+
+.top{
+  font-size:18px;
+  font-weight:800;
+  color:#7653b4;
+}
+
+.amount{
+  font-size:28px;
+  font-weight:900;
+  color:#9a6bd2;
+  margin:6px 0 8px;
+}
+
+.msg{
+  font-size:18px;
+  color:#49395a;
+  line-height:1.45;
+  word-break:break-word;
+}
+
+.small{
+  font-size:12px;
+  color:#8a7b9a;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="alert" id="alert">
+
+  <div class="top" id="name">
+    💜 Có donate mới!
+  </div>
+
+  <div class="amount" id="amount">
+    0đ
+  </div>
+
+  <div class="msg" id="content">
+  </div>
+
+  <div class="small">
+    Cảm ơn bạn đã ủng hộ ✨
+  </div>
+
+</div>
+
+<script>
+
+const API = '/api/latest';
+
+let lastDonationId =
+  localStorage.getItem('lastDonationId') || '';
+
+let initialized = !!lastDonationId;
+
+let busy = false;
+
+
+/* =========================
+   HIỂN THỊ DONATE
+========================= */
+
+function showDonation(data){
+
+  const name =
+    data.name || 'Một người bạn';
+
+  const amount =
+    Number(data.amount || 0)
+      .toLocaleString('vi-VN') + 'đ';
+
+  const content =
+    data.content || 'Đã gửi một khoản ủng hộ 💜';
+
+
+  document.getElementById('name')
+    .textContent =
+      '💜 ' + name + ' đã donate';
+
+  document.getElementById('amount')
+    .textContent = amount;
+
+  document.getElementById('content')
+    .textContent = content;
+
+
+  const alert =
+    document.getElementById('alert');
+
+  alert.classList.add('show');
+
+
+  /* Đọc nội dung donate */
+
+  speak(content);
+
+
+  /* Ẩn sau 10 giây */
+
+  setTimeout(() => {
+
+    alert.classList.remove('show');
+
+    busy = false;
+
+  },10000);
+}
+
+
+/* =========================
+   TEXT TO SPEECH
+========================= */
+
+function speak(text){
+
+  if(!text) return;
+
+  try{
+
+    speechSynthesis.cancel();
+
+    const voice =
+      new SpeechSynthesisUtterance(text);
+
+    voice.lang = 'vi-VN';
+
+    voice.rate = 1;
+
+    voice.pitch = 1;
+
+    voice.volume = 1;
+
+    speechSynthesis.speak(voice);
+
+  }catch(error){
+
+    console.log(
+      'TTS error:',
+      error
+    );
+
+  }
+}
+
+
+/* =========================
+   KIỂM TRA DONATE
+========================= */
+
+async function checkDonation(){
+
+  if(busy) return;
+
+  try{
+
+    const response =
+      await fetch(
+        API +
+        '?overlay=1&ts=' +
+        Date.now(),
+        {
+          cache:'no-store'
+        }
+      );
+
+    if(!response.ok){
+
+      console.log(
+        'API error:',
+        response.status
+      );
+
+      return;
+    }
+
+
+    const data =
+      await response.json();
+
+
+    const donation =
+      data.latest;
+
+
+    if(!donation){
+
+      return;
+    }
+
+
+    const id =
+      String(donation.id);
+
+
+    /*
+      Lần đầu mở overlay:
+      không đọc giao dịch cũ.
+    */
+
+    if(!initialized){
+
+      lastDonationId = id;
+
+      localStorage.setItem(
+        'lastDonationId',
+        id
+      );
+
+      initialized = true;
+
+      console.log(
+        'Đã ghi nhận giao dịch hiện tại.'
+      );
+
+      return;
+    }
+
+
+    /*
+      Nếu là giao dịch mới
+    */
+
+    if(id === lastDonationId){
+
+      return;
+    }
+
+
+    lastDonationId = id;
+
+    localStorage.setItem(
+      'lastDonationId',
+      id
+    );
+
+
+    showDonation(donation);
+
+
+  }catch(error){
+
+    console.log(
+      'Không thể kiểm tra donate:',
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================
+   TEST MODE
+========================= */
+
+function testDonation(){
+
+  const testData = {
+
+    id:'TEST-' + Date.now(),
+
+    name:'Na',
+
+    amount:50000,
+
+    content:
+      'Chúc bạn stream vui vẻ nha! 💜'
+
+  };
+
+
+  showDonation(testData);
+
+}
+
+
+/* =========================
+   KHỞI ĐỘNG
+========================= */
+
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+
+/*
+  Nếu URL có ?test=1
+  thì hiện donate giả lập.
+*/
+
+if(params.get('test') === '1'){
+
+  setTimeout(() => {
+
+    testDonation();
+
+  },1000);
+
+}else{
+
+  checkDonation();
+
+  setInterval(
+    checkDonation,
+    3000
+  );
+
+}
+
+</script>
+
+</body>
+</html>
