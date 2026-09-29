@@ -102,3 +102,7 @@ Chủ tài khoản: TA THI LE NA
 - TTS test: `https://donate-pastel.vercel.app/tts-test.html`
 
 Lưu ý: đây là dịch vụ online của Edge TTS thông qua thư viện Node, không phải Azure Speech API có SLA. Dịch vụ upstream có thể thay đổi hoặc giới hạn lưu lượng.
+
+
+## OBS TTS audio unlock
+The overlay uses server-generated Vietnamese MP3 audio. The first time you use the OBS Browser Source, open the Browser Source context menu -> Interact and click the purple/white “Bấm một lần để bật âm thanh donate” button once. After that, the overlay stores the unlocked state locally and future TTS alerts can play automatically. Keep Browser Source -> Control audio via OBS enabled. For cleaner audio routing, Browser can stay Monitor Off because the Browser channel itself is sent to the stream.

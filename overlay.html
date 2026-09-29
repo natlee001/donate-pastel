@@ -10,174 +10,194 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overf
 .alert{position:absolute;right:30px;bottom:30px;width:420px;padding:22px 24px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(242,231,255,.97));border:2px solid rgba(181,151,233,.55);box-shadow:0 18px 60px rgba(76,45,110,.28);opacity:0;visibility:hidden;transform:translateY(25px) scale(.96);transition:opacity .4s ease,transform .4s ease,visibility .4s}
 .alert.show{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
 .top{font-size:18px;font-weight:800;color:#7653b4}.amount{font-size:28px;font-weight:900;color:#9a6bd2;margin:6px 0 8px}.msg{font-size:18px;color:#49395a;line-height:1.45;word-break:break-word;white-space:pre-wrap}.small{font-size:12px;color:#8a7b9a;margin-top:10px}
-.test-badge{position:absolute;left:24px;top:20px;padding:8px 11px;border-radius:12px;background:rgba(255,230,245,.95);color:#8f4c73;font-size:12px;font-weight:800;display:none}.error-badge{position:absolute;left:24px;top:56px;padding:8px 11px;border-radius:12px;background:rgba(255,235,238,.96);color:#a84d63;font-size:12px;font-weight:800;display:none;max-width:420px;line-height:1.35}.status-badge{position:absolute;left:24px;bottom:20px;padding:8px 11px;border-radius:12px;background:rgba(239,232,255,.96);color:#7653b4;font-size:12px;font-weight:800;display:none}
-body.test .test-badge{display:block}body.error .error-badge{display:block}body.debug .status-badge{display:block}
+.setup{position:absolute;left:24px;top:24px;padding:12px 15px;border-radius:14px;background:rgba(255,255,255,.97);border:2px solid rgba(171,132,223,.5);box-shadow:0 12px 35px rgba(76,45,110,.18);color:#674d87;font-weight:800;cursor:pointer;display:none;z-index:10}
+.setup.show{display:block}
+.error{position:absolute;left:24px;bottom:24px;max-width:520px;padding:9px 12px;border-radius:12px;background:rgba(255,236,240,.97);border:1px solid rgba(193,94,114,.25);color:#a34c61;font-size:12px;font-weight:700;display:none;z-index:9}
+.error.show{display:block}
 </style>
 </head>
 <body>
-<div class="test-badge">TEST MODE</div>
-<div class="error-badge" id="errorBadge"></div>
-<div class="status-badge" id="statusBadge"></div>
+<button class="setup" id="unlockBtn">🔊 Bấm một lần để bật âm thanh donate</button>
+<div class="error" id="errorBox"></div>
 <div class="alert" id="alert">
   <div class="top" id="name">💜 Có donate mới!</div>
   <div class="amount" id="amount">0đ</div>
   <div class="msg" id="content"></div>
   <div class="small">Cảm ơn bạn đã ủng hộ ✨</div>
 </div>
-<audio id="ttsAudio" preload="auto"></audio>
+<audio id="ttsAudio" preload="auto" playsinline></audio>
 <script>
 const API='/api/latest';
 const TTS='/api/tts';
-const STORAGE_KEY='donate_seen_ids_v3';
+const SEEN_KEY='donate_seen_ids_v4';
+const UNLOCK_KEY='donate_tts_unlocked_v1';
 const MAX_SEEN=100;
 let seenIds=new Set();
 let initialized=false;
 let queue=[];
 let busy=false;
 let hideTimer=null;
+let ttsUnlocked=localStorage.getItem(UNLOCK_KEY)==='1';
 const alertEl=document.getElementById('alert');
 const audio=document.getElementById('ttsAudio');
+const unlockBtn=document.getElementById('unlockBtn');
+const errorBox=document.getElementById('errorBox');
 
 function loadSeen(){
   try{
-    const raw=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const raw=JSON.parse(localStorage.getItem(SEEN_KEY)||'[]');
     if(Array.isArray(raw)) seenIds=new Set(raw.map(String).slice(-MAX_SEEN));
-  }catch{}
+  }catch(e){}
 }
 function saveSeen(){
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify([...seenIds].slice(-MAX_SEEN)));}catch{}
+  try{localStorage.setItem(SEEN_KEY,JSON.stringify([...seenIds].slice(-MAX_SEEN)));}catch(e){}
+}
+function showError(text){
+  if(!text){errorBox.classList.remove('show');errorBox.textContent='';return;}
+  errorBox.textContent=text;
+  errorBox.classList.add('show');
+}
+function refreshUnlockUI(){
+  unlockBtn.classList.toggle('show', !ttsUnlocked);
 }
 loadSeen();
+refreshUnlockUI();
+
+// Very short silent WAV used only to unlock the media element after a user click.
+const SILENT_WAV='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
+
+async function unlockAudio(){
+  try{
+    audio.src=SILENT_WAV;
+    audio.volume=0;
+    audio.currentTime=0;
+    await audio.play();
+    audio.pause();
+    audio.currentTime=0;
+    audio.volume=1;
+    ttsUnlocked=true;
+    localStorage.setItem(UNLOCK_KEY,'1');
+    refreshUnlockUI();
+    showError('');
+    return true;
+  }catch(e){
+    showError('Chưa bật được âm thanh. Hãy bấm nút "Bật âm thanh donate" trong overlay OBS một lần.');
+    return false;
+  }
+}
+unlockBtn.addEventListener('click',unlockAudio);
 
 function money(v){return Number(v||0).toLocaleString('vi-VN')+'đ';}
-function showError(text){
-  if(!text){document.body.classList.remove('error');return;}
-  document.getElementById('errorBadge').textContent=text;
-  document.body.classList.add('error');
-  setTimeout(()=>document.body.classList.remove('error'),7000);
-}
 
 function showDonation(data){
   document.getElementById('name').textContent='💜 '+(data.name||'Một người bạn')+' đã donate';
   document.getElementById('amount').textContent=money(data.amount);
   document.getElementById('content').textContent=data.content||'';
   alertEl.classList.add('show');
-
   if(hideTimer) clearTimeout(hideTimer);
-  hideTimer=setTimeout(()=>alertEl.classList.remove('show'),Math.max(10000, Number(data.durationMs)||10000));
+  hideTimer=setTimeout(()=>alertEl.classList.remove('show'),Math.max(10000,Number(data.durationMs)||10000));
 }
 
 async function speakDonation(data){
   const message=String(data.content||'').trim();
   if(!message) return true;
 
+  if(!ttsUnlocked){
+    refreshUnlockUI();
+    showError('Popup đã hiện nhưng âm thanh đang khóa. Hãy bấm "🔊 Bật âm thanh donate" một lần trong OBS → Interact.');
+    return false;
+  }
+
   const speechText=`${data.name||'Một người bạn'} vừa donate ${Number(data.amount||0).toLocaleString('vi-VN')} đồng. ${message}`;
 
   try{
-    const r=await fetch(TTS,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      cache:'no-store',
-      body:JSON.stringify({text:speechText})
-    });
-
+    const r=await fetch(TTS,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({text:speechText})});
     if(!r.ok){
       let detail='TTS không tạo được âm thanh.';
-      try{const d=await r.json(); if(d?.error) detail+=` (${d.error})`;}catch{}
+      try{const d=await r.json();if(d&&d.error)detail+=' ('+d.error+')';}catch(e){}
       showError(detail);
       return false;
     }
 
     const blob=await r.blob();
     const url=URL.createObjectURL(blob);
-    audio.src=url;
-    audio.currentTime=0;
-    audio.volume=1;
 
     try{
+      audio.pause();
+      audio.src=url;
+      audio.load();
+      audio.currentTime=0;
+      audio.volume=1;
       await audio.play();
     }catch(error){
       URL.revokeObjectURL(url);
-      showError('OBS/Browser chưa cho phép phát âm thanh TTS. Kiểm tra Browser Source → Control audio via OBS.');
+      ttsUnlocked=false;
+      localStorage.removeItem(UNLOCK_KEY);
+      refreshUnlockUI();
+      showError('OBS đã chặn phát audio. Bấm "🔊 Bật âm thanh donate" trong OBS → Interact rồi thử lại.');
       return false;
     }
 
-    // Chờ đọc xong rồi mới chuyển sang donate tiếp theo, tránh chồng tiếng.
     await new Promise(resolve=>{
-      let finished=false;
-      const finish=()=>{
-        if(finished)return;
-        finished=true;
-        audio.removeEventListener('ended',finish);
-        audio.removeEventListener('error',finish);
-        URL.revokeObjectURL(url);
-        resolve();
-      };
+      let done=false;
+      const finish=()=>{if(done)return;done=true;audio.removeEventListener('ended',finish);audio.removeEventListener('error',finish);URL.revokeObjectURL(url);resolve();};
       audio.addEventListener('ended',finish,{once:true});
       audio.addEventListener('error',finish,{once:true});
       setTimeout(finish,30000);
     });
 
+    showError('');
     return true;
   }catch(error){
-    console.error(error);
+    console.error('TTS error',error);
     showError('Không kết nối được TTS.');
     return false;
   }
 }
 
 async function playNext(){
-  if(busy || !queue.length) return;
+  if(busy||!queue.length)return;
   busy=true;
   const item=queue.shift();
   showDonation(item);
   await speakDonation(item);
-  setTimeout(()=>{busy=false; playNext();},500);
+  setTimeout(()=>{busy=false;playNext();},500);
 }
 
 async function checkDonations(){
   try{
     const r=await fetch(API+'?overlay=1&ts='+Date.now(),{cache:'no-store'});
-    if(!r.ok) return;
+    if(!r.ok)return;
     const d=await r.json();
     const items=Array.isArray(d.items)?d.items:[];
-    if(!items.length) return;
+    if(!items.length)return;
 
     if(!initialized){
-      // On first load, mark all existing paid donations as seen so old alerts are not replayed.
-      items.forEach(x=>{if(x?.id!==undefined) seenIds.add(String(x.id));});
+      items.forEach(x=>{if(x&&x.id!==undefined)seenIds.add(String(x.id));});
       saveSeen();
       initialized=true;
       return;
     }
 
-    const fresh=items
-      .filter(x=>x && x.id!==undefined && !seenIds.has(String(x.id)))
-      .reverse();
-
-    if(!fresh.length) return;
+    const fresh=items.filter(x=>x&&x.id!==undefined&&!seenIds.has(String(x.id))).reverse();
+    if(!fresh.length)return;
     fresh.forEach(x=>seenIds.add(String(x.id)));
     saveSeen();
     queue.push(...fresh);
     playNext();
   }catch(error){
-    console.error('Donation polling error:',error);
+    console.error('Donation polling error',error);
   }
 }
 
 function testDonation(){
-  queue.push({
-    id:'TEST-'+Date.now(),
-    name:'Na',
-    amount:50000,
-    content:'Chúc bạn stream vui vẻ nha! 💜 Hôm nay chơi game thật hay nhé!'
-  });
+  initialized=true;
+  queue.push({id:'TEST-'+Date.now(),name:'Na',amount:50000,content:'Chúc bạn stream vui vẻ nha! 💜 Hôm nay chơi game thật hay nhé!'});
   playNext();
 }
 
 const params=new URLSearchParams(location.search);
 if(params.get('test')==='1'){
-  document.body.classList.add('test');
   initialized=true;
   setTimeout(testDonation,1200);
 }else{
