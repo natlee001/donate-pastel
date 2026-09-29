@@ -1,27 +1,232 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ủng hộ mình 💜</title>
-<style>
-:root{--p:#9b7ede;--p2:#cdbcf6;--bg:#fbf8ff;--ink:#443657;--card:#fff;--shadow:0 18px 50px rgba(112,83,160,.16)}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(circle at 10% 0%,#eadfff 0,transparent 32%),radial-gradient(circle at 90% 20%,#f6dff0 0,transparent 28%),var(--bg);color:var(--ink);min-height:100vh}
-.wrap{max-width:900px;margin:auto;padding:42px 18px 60px}.hero{text-align:center;margin-bottom:24px}.logo{width:76px;height:76px;margin:auto;border-radius:24px;background:linear-gradient(135deg,#a987e8,#d9b7ed);display:grid;place-items:center;font-size:38px;box-shadow:var(--shadow)}h1{margin:16px 0 8px;font-size:34px}.sub{opacity:.72;margin:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border:1px solid #eee5fb;border-radius:28px;padding:24px;box-shadow:var(--shadow)}.bank{display:flex;flex-direction:column;align-items:center}.bank h2{margin:0 0 5px}.bank p{margin:5px 0}.qr{width:min(310px,100%);aspect-ratio:1;border-radius:22px;background:#fff;padding:10px;border:1px solid #eee;object-fit:contain}.hint{background:#f4effc;border-radius:16px;padding:12px 14px;margin-top:14px;font-size:14px}.field{margin-top:12px}.label{font-size:13px;opacity:.7}.value{font-weight:700;font-size:19px;margin-top:3px;word-break:break-all}.copy{border:0;border-radius:14px;background:#a488df;color:#fff;padding:10px 14px;margin-top:10px;cursor:pointer}.form h2{margin-top:0}.input{width:100%;padding:14px 15px;border:1px solid #e3d8f5;border-radius:14px;background:#fff;font:inherit;outline:none}.input:focus{border-color:#aa8de4;box-shadow:0 0 0 4px #eee6ff}.donate{width:100%;margin-top:14px;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#9a7bd9,#c19be9);color:white;font-size:16px;font-weight:700;cursor:pointer}.recent{margin-top:20px}.recent h2{margin-top:0}.row{display:flex;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #eee8f7}.amt{font-weight:800;color:#8a69c7}.muted{opacity:.62;font-size:13px}.footer{text-align:center;margin-top:22px;font-size:13px;opacity:.6}@media(max-width:700px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Donate 💜</title>
+  <style>
+    :root{
+      --bg:#f6efff;
+      --bg2:#fffaff;
+      --purple:#9b73dc;
+      --purple-dark:#4b3768;
+      --purple-soft:#eee3ff;
+      --text:#4b4160;
+      --muted:#8d829e;
+      --white:rgba(255,255,255,.92);
+      --border:#e7d9f8;
+      --shadow:0 18px 50px rgba(104,72,145,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, #eadcff 0, transparent 30%),
+        radial-gradient(circle at 90% 18%, #ffe6f5 0, transparent 28%),
+        linear-gradient(135deg,var(--bg),var(--bg2));
+    }
+    .wrap{max-width:1050px;margin:0 auto;padding:30px 20px 50px}
+    header{text-align:center;margin-bottom:28px}
+    h1{margin:0;font-size:clamp(30px,5vw,48px);line-height:1.1;color:#4a326d}
+    .subtitle{margin:12px auto 0;color:var(--muted);font-size:16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .card{
+      background:var(--white);
+      border:1px solid rgba(255,255,255,.8);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      padding:28px;
+      backdrop-filter:blur(12px);
+    }
+    .title{display:flex;align-items:center;gap:10px;font-size:25px;font-weight:800;color:#4b3c5f;margin:0 0 8px}
+    .desc{margin:0 0 20px;color:var(--muted);line-height:1.6}
+    .qrbox{
+      display:flex;justify-content:center;align-items:center;
+      background:#fff;border:1px solid var(--border);
+      border-radius:24px;padding:16px;width:min(100%,360px);margin:0 auto 20px;
+    }
+    .qrbox img{display:block;width:100%;max-width:300px;height:auto}
+    .bank{text-align:center}
+    .label{font-size:13px;color:var(--muted);margin-top:12px}
+    .value{font-size:21px;font-weight:800;color:#4d3a68;margin-top:3px}
+    .copy{
+      border:0;border-radius:14px;padding:10px 17px;margin-top:10px;
+      background:#a47add;color:#fff;font-weight:700;cursor:pointer
+    }
+    .copy:active{transform:scale(.98)}
+    .hint{
+      margin-top:20px;padding:17px 18px;border-radius:18px;
+      background:linear-gradient(135deg,#f1e7ff,#fff0fa);
+      color:#746684;line-height:1.6;font-size:14px
+    }
+    .hint strong{color:#59416f}
+    .example{
+      margin-top:14px;padding:13px 15px;border-radius:14px;
+      background:#fff;border:1px dashed #d8c4f2;
+      font-weight:700;color:#62497a;word-break:break-word
+    }
+    .steps{display:grid;gap:13px;margin-top:8px}
+    .step{
+      display:flex;gap:13px;align-items:flex-start;
+      padding:15px;border-radius:17px;background:#fbf8ff;border:1px solid #eee4f8
+    }
+    .num{
+      flex:0 0 34px;width:34px;height:34px;border-radius:50%;
+      display:grid;place-items:center;background:#a27bd9;color:white;font-weight:800
+    }
+    .step b{display:block;color:#554365;margin-bottom:3px}
+    .step span{font-size:14px;color:var(--muted);line-height:1.5}
+    .recent{margin-top:22px}
+    .recent h2{margin:0 0 15px;font-size:22px;color:#4b3c5f}
+    .list{display:grid;gap:10px}
+    .empty{color:var(--muted);font-size:14px;padding:14px 0}
+    .donate{
+      display:flex;justify-content:space-between;gap:15px;align-items:flex-start;
+      padding:15px 16px;border:1px solid #eee3f8;background:#fff;border-radius:17px
+    }
+    .donate .name{font-weight:800;color:#574367}
+    .donate .content{margin-top:4px;color:#84768f;font-size:14px;line-height:1.45}
+    .amount{white-space:nowrap;font-weight:800;color:#8d62cb}
+    footer{text-align:center;color:#9b8da8;font-size:13px;margin-top:24px}
+    @media(max-width:760px){
+      .wrap{padding:22px 14px 40px}
+      .grid{grid-template-columns:1fr}
+      .card{padding:21px;border-radius:23px}
+      .title{font-size:22px}
+    }
+  </style>
 </head>
-<body><main class="wrap">
-<section class="hero"><div class="logo">💜</div><h1>Ủng hộ mình một ly trà sữa nhé!</h1><p class="sub">Cảm ơn bạn đã xem livestream và ủng hộ kênh ✨</p></section>
-<div class="grid">
-<section class="card bank"><h2>💜 Chuyển khoản</h2><p>Quét QR để donate nhanh</p><img class="qr" id="qr" src="/qr-placeholder.svg" alt="QR ngân hàng"><div class="field"><div class="label">Ngân hàng</div><div class="value" id="bankName">YOUR BANK</div></div><div class="field"><div class="label">Số tài khoản</div><div class="value" id="account">YOUR ACCOUNT</div><button class="copy" onclick="copyText('account')">Sao chép số TK</button></div><div class="field"><div class="label">Tên tài khoản</div><div class="value" id="owner">YOUR NAME</div></div><div class="hint">Bạn có thể ghi lời nhắn trực tiếp trong <b>nội dung chuyển khoản</b>.<br>Ví dụ: <b>Chúc bạn stream vui!</b><br><span style="opacity:.72">Lời nhắn có thể được đọc nguyên văn trên livestream.</span></div></section>
-<section class="card form"><h2>✨ Gửi lời nhắn</h2><p class="muted">Ghi lời nhắn trong nội dung chuyển khoản. Khi giao dịch được xác nhận, lời nhắn sẽ được hiện trên live và đọc tự động.</p><input class="input" id="name" placeholder="Tên hiển thị (không bắt buộc)"><textarea class="input" id="message" rows="4" placeholder="Lời nhắn của bạn..." style="margin-top:12px;resize:vertical"></textarea><button class="donate" onclick="showGuide()">💜 Mình đã chuyển khoản</button><div class="hint" id="guide" style="display:none">Sau khi chuyển khoản, hệ thống sẽ tự nhận giao dịch. Bạn không cần gửi ảnh biên lai.</div></section>
-</div>
-<section class="card recent"><h2>🌷 Donate gần đây</h2><div id="recent">Đang tải...</div></section>
-<div class="footer">Made with 💜 · Donate hỗ trợ kênh</div></main>
-<script>
-const CONFIG={bankName:'TPBank',account:'10005680585',owner:'TA THI LE NA',qr:'https://vietqr.app/img?acc=10005680585&bank=TPBank&template=compact&showinfo=true&fullacc=true&holder=TA%20THI%20LE%20NA&store=DONATE'};
-for(const [id,val] of [['bankName',CONFIG.bankName],['account',CONFIG.account],['owner',CONFIG.owner]])document.getElementById(id).textContent=val;document.getElementById('qr').src=CONFIG.qr;
-function copyText(id){navigator.clipboard?.writeText(document.getElementById(id).textContent);alert('Đã sao chép!')}
-function showGuide(){document.getElementById('guide').style.display='block'}
-async function loadRecent(){try{const r=await fetch('/api/latest');const d=await r.json();const arr=d.items||[];document.getElementById('recent').innerHTML=arr.length?arr.map(x=>`<div class="row"><div><b>${escapeHtml(x.name||'Một người bạn')}</b><div class="muted">${escapeHtml(x.content||'Đã ủng hộ 💜')}</div></div><div class="amt">${Number(x.amount||0).toLocaleString('vi-VN')}đ</div></div>`).join(''):'Chưa có giao dịch.'}catch(e){document.getElementById('recent').textContent='Chưa kết nối dữ liệu.'}}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}loadRecent();setInterval(loadRecent,15000);
-</script></body></html>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Ủng hộ mình một ly trà sữa nhé! 💜</h1>
+      <p class="subtitle">Cảm ơn bạn đã xem livestream và ủng hộ kênh ✨</p>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h2 class="title">💜 Chuyển khoản</h2>
+        <p class="desc">Quét QR để donate nhanh bằng ứng dụng ngân hàng.</p>
+
+        <div class="qrbox">
+          <img id="qr" alt="QR chuyển khoản TPBank">
+        </div>
+
+        <div class="bank">
+          <div class="label">Ngân hàng</div>
+          <div class="value">TPBank</div>
+
+          <div class="label">Số tài khoản</div>
+          <div class="value" id="account">10005680585</div>
+          <button class="copy" onclick="copyAccount()">Sao chép số TK</button>
+
+          <div class="label">Tên tài khoản</div>
+          <div class="value">TA THI LE NA</div>
+        </div>
+
+        <div class="hint">
+          💬 <strong>Muốn gửi lời nhắn trên livestream?</strong><br>
+          Bạn chỉ cần ghi lời nhắn trực tiếp vào ô <strong>“Nội dung chuyển khoản”</strong>
+          khi thực hiện chuyển khoản. Không cần nhập lại lời nhắn ở đây.
+          <div class="example">Ví dụ: Chúc bạn stream vui! 💜</div>
+          <br>
+          ✨ Khi giao dịch được xác nhận, nội dung chuyển khoản sẽ tự động được đưa lên livestream và đọc bằng giọng nói.
+        </div>
+      </article>
+
+      <article class="card">
+        <h2 class="title">✨ Cách donate</h2>
+        <p class="desc">Chỉ cần 3 bước đơn giản.</p>
+
+        <div class="steps">
+          <div class="step">
+            <div class="num">1</div>
+            <div><b>Quét mã QR</b><span>Mở ứng dụng ngân hàng và quét mã QR bên trái.</span></div>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <div><b>Nhập số tiền & lời nhắn</b><span>Ở phần “Nội dung chuyển khoản”, bạn có thể ghi lời nhắn muốn gửi lên livestream.</span></div>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <div><b>Hoàn tất</b><span>SePay tự động nhận giao dịch. Khi hệ thống xác nhận, donate sẽ xuất hiện trên stream và TTS sẽ đọc lời nhắn.</span></div>
+          </div>
+        </div>
+
+        <div class="recent">
+          <h2>🌷 Donate gần đây</h2>
+          <div id="list" class="list">
+            <div class="empty">Chưa có giao dịch hiển thị.</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <footer>💜 Cảm ơn bạn rất nhiều vì đã ủng hộ kênh!</footer>
+  </main>
+
+  <script>
+    const ACCOUNT = "10005680585";
+    const BANK = "TPBank";
+    const QR_URL = "https://qr.sepay.vn/img?acc=" + encodeURIComponent(ACCOUNT) +
+                   "&bank=" + encodeURIComponent(BANK) +
+                   "&template=compact";
+
+    document.getElementById("qr").src = QR_URL;
+
+    async function copyAccount(){
+      try{
+        await navigator.clipboard.writeText(ACCOUNT);
+        const btn = document.querySelector(".copy");
+        const old = btn.textContent;
+        btn.textContent = "Đã sao chép ✓";
+        setTimeout(()=>btn.textContent=old,1500);
+      }catch(e){
+        alert("Số tài khoản: " + ACCOUNT);
+      }
+    }
+
+    function money(v){
+      return Number(v || 0).toLocaleString("vi-VN") + "đ";
+    }
+
+    function render(items){
+      const list = document.getElementById("list");
+      if(!Array.isArray(items) || !items.length){
+        list.innerHTML = '<div class="empty">Chưa có giao dịch hiển thị.</div>';
+        return;
+      }
+      list.innerHTML = items.slice(0,10).map(x => `
+        <div class="donate">
+          <div>
+            <div class="name">${escapeHtml(x.name || "Một người bạn")}</div>
+            <div class="content">${escapeHtml(x.content || "Đã ủng hộ kênh 💜")}</div>
+          </div>
+          <div class="amount">${money(x.amount)}</div>
+        </div>
+      `).join("");
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+
+    async function loadRecent(){
+      try{
+        const r = await fetch("/api/latest", {cache:"no-store"});
+        if(!r.ok) return;
+        const data = await r.json();
+        render(data.items || data.data || []);
+      }catch(e){}
+    }
+
+    loadRecent();
+    setInterval(loadRecent, 15000);
+  </script>
+</body>
+</html>
