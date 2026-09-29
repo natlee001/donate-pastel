@@ -90,3 +90,15 @@ Khi SePay nhận giao dịch:
 TPBank
 STK: 10005680585
 Chủ tài khoản: TA THI LE NA
+
+
+## 10) TTS server-side (giọng Việt cố định)
+- Endpoint: `/api/tts`
+- Voice: `vi-VN-HoaiMyNeural` (nữ)
+- Không cần thêm API key TTS.
+- Gói `node-edge-tts` tạo MP3 bằng dịch vụ TTS online của Microsoft Edge.
+- Overlay không dùng `speechSynthesis` của Chrome/OBS nữa.
+- Endpoint giới hạn 2.000 ký tự và có rate limit nhẹ theo IP để tránh lạm dụng.
+- TTS test: `https://donate-pastel.vercel.app/tts-test.html`
+
+Lưu ý: đây là dịch vụ online của Edge TTS thông qua thư viện Node, không phải Azure Speech API có SLA. Dịch vụ upstream có thể thay đổi hoặc giới hạn lưu lượng.

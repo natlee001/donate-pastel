@@ -3,49 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kiểm tra giọng TTS tiếng Việt</title>
+<title>Kiểm tra TTS tiếng Việt</title>
 <style>
 body{font-family:Arial,sans-serif;background:#f6efff;color:#4b3768;margin:0;padding:30px}
 .wrap{max-width:760px;margin:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 18px 55px rgba(76,45,110,.15)}
-h1{margin-top:0}textarea{width:100%;min-height:120px;padding:12px;border:1px solid #ddcff0;border-radius:14px;font:inherit}
-button{border:0;border-radius:12px;padding:12px 18px;background:#9b73dc;color:#fff;font-weight:800;cursor:pointer;margin:8px 6px 0 0}
-pre{background:#faf7ff;padding:14px;border-radius:14px;white-space:pre-wrap;word-break:break-word}.good{color:#3b8b67}.bad{color:#b34d64}
+h1{margin-top:0}textarea{width:100%;min-height:150px;padding:12px;border:1px solid #ddcff0;border-radius:14px;font:inherit;resize:vertical}button{border:0;border-radius:12px;padding:12px 18px;background:#9b73dc;color:#fff;font-weight:800;cursor:pointer;margin:10px 6px 0 0}.status{margin-top:16px;padding:14px;border-radius:14px;background:#faf7ff;white-space:pre-wrap;line-height:1.5}.good{color:#367a5a}.bad{color:#a94d63}
+audio{width:100%;margin-top:16px}
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>🔊 Kiểm tra TTS tiếng Việt</h1>
-<p>Trang này kiểm tra voice mà Chrome/OBS Browser có thể nhìn thấy.</p>
+<p>Không dùng voice của Chrome/OBS. Máy chủ sẽ tạo MP3 bằng giọng <b>vi-VN-HoaiMyNeural</b>.</p>
 <textarea id="text">Chúc bạn stream vui vẻ nha! Hôm nay chơi game thật hay nhé! 💜</textarea>
-<div><button id="refresh">Làm mới danh sách voice</button><button id="speak">🔊 Đọc thử</button></div>
-<pre id="result">Đang tải danh sách voice...</pre>
+<div><button id="speak">🔊 Tạo & đọc thử</button></div>
+<div class="status" id="status">Sẵn sàng.</div>
+<audio id="audio" controls></audio>
 </div>
 <script>
 const text=document.getElementById('text');
-const result=document.getElementById('result');
-
-function renderVoices(){
-  const voices=speechSynthesis.getVoices()||[];
-  const vi=voices.filter(v=>String(v.lang||'').toLowerCase().startsWith('vi'));
-  if(!vi.length){
-    result.className='bad';
-    result.textContent='Không tìm thấy voice tiếng Việt trong môi trường này.\\n\\nHãy cài Vietnamese TTS voice trong Windows rồi khởi động lại OBS.';
-    return;
+const status=document.getElementById('status');
+const audio=document.getElementById('audio');
+document.getElementById('speak').onclick=async()=>{
+  const value=text.value.trim();
+  if(!value){status.className='status bad';status.textContent='Hãy nhập nội dung.';return;}
+  status.className='status';status.textContent='Đang tạo giọng Việt...';
+  try{
+    const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:value})});
+    if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||`HTTP ${r.status}`);}
+    const blob=await r.blob();
+    const old=audio.src;
+    if(old) URL.revokeObjectURL(old);
+    audio.src=URL.createObjectURL(blob);
+    await audio.play();
+    status.className='status good';
+    status.textContent='✅ Đã tạo audio giọng Việt.\nVoice: vi-VN-HoaiMyNeural';
+  }catch(e){
+    status.className='status bad';
+    status.textContent='❌ '+(e.message||e);
   }
-  result.className='good';
-  result.textContent='Voice tiếng Việt tìm thấy:\\n\\n'+vi.map(v=>`${v.name} — ${v.lang}`).join('\\n');
-}
-speechSynthesis.onvoiceschanged=renderVoices;
-renderVoices();
-document.getElementById('refresh').onclick=renderVoices;
-document.getElementById('speak').onclick=()=>{
-  const voices=speechSynthesis.getVoices()||[];
-  const voice=voices.find(v=>String(v.lang||'').toLowerCase()==='vi-vn')||voices.find(v=>String(v.lang||'').toLowerCase().startsWith('vi'));
-  if(!voice){alert('Không có voice tiếng Việt. Hãy cài Vietnamese TTS voice trong Windows.');return;}
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text.value);
-  u.voice=voice;u.lang=voice.lang;u.rate=.95;u.pitch=1;u.volume=1;
-  speechSynthesis.speak(u);
 };
 </script>
 </body>

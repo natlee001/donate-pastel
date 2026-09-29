@@ -1,8 +1,12 @@
 {
   "name": "pastel-donate-sepay",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "dev": "vercel dev"
-  }
+  },
+  "dependencies": {
+    "node-edge-tts": "1.2.10"
+  },
+  "type": "module"
 }
