@@ -176,6 +176,26 @@ function showDonation(data){
    TEXT TO SPEECH
 ========================= */
 
+let voices = [];
+
+function loadVoices(){
+
+  voices = speechSynthesis.getVoices();
+
+  console.log(
+    'Available voices:',
+    voices.map(v => ({
+      name: v.name,
+      lang: v.lang
+    }))
+  );
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+
+loadVoices();
+
+
 function speak(text){
 
   if(!text) return;
@@ -184,29 +204,65 @@ function speak(text){
 
     speechSynthesis.cancel();
 
-    const voice =
+    const utterance =
       new SpeechSynthesisUtterance(text);
 
-    voice.lang = 'vi-VN';
+    // Tìm voice tiếng Việt thật sự
+    let vietnameseVoice =
+      voices.find(v =>
+        v.lang &&
+        v.lang.toLowerCase() === 'vi-vn'
+      );
 
-    voice.rate = 1;
+    // Nếu không có vi-VN thì tìm mọi voice bắt đầu bằng vi
+    if(!vietnameseVoice){
 
-    voice.pitch = 1;
+      vietnameseVoice =
+        voices.find(v =>
+          v.lang &&
+          v.lang.toLowerCase().startsWith('vi')
+        );
 
-    voice.volume = 1;
+    }
 
-    speechSynthesis.speak(voice);
+    if(vietnameseVoice){
+
+      utterance.voice = vietnameseVoice;
+      utterance.lang = vietnameseVoice.lang;
+
+      console.log(
+        'Đang dùng giọng:',
+        vietnameseVoice.name,
+        vietnameseVoice.lang
+      );
+
+    }else{
+
+      // Không tìm thấy voice Việt
+      utterance.lang = 'vi-VN';
+
+      console.warn(
+        'Không tìm thấy giọng tiếng Việt trong OBS.'
+      );
+
+    }
+
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    speechSynthesis.speak(utterance);
 
   }catch(error){
 
-    console.log(
+    console.error(
       'TTS error:',
       error
     );
 
   }
-}
 
+}
 
 /* =========================
    KIỂM TRA DONATE
