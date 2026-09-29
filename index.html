@@ -93,7 +93,8 @@ footer{text-align:center;margin-top:25px;color:#9a8da8;font-size:13px}
         <div style="font-size:46px">✅</div>
         <div style="font-size:24px;font-weight:900;color:#6f5a83;margin-top:4px">Donate đã được xác nhận!</div>
         <div id="paidAmount" style="font-size:22px;font-weight:900;color:#8d62cb;margin-top:8px"></div>
-        <div style="margin-top:8px;color:#8b7c95;line-height:1.5">Cảm ơn bạn rất nhiều 💜<br>Bạn có thể đóng trang này.</div>
+        <div style="margin-top:8px;color:#8b7c95;line-height:1.5">Cảm ơn bạn rất nhiều 💜<br>Bạn có thể tạo một lượt donate mới ngay bên trên.</div>
+        <button type="button" class="btn" style="margin-top:14px" onclick="focusNewDonation()">💜 Tạo lượt donate mới</button>
       </div>
       <div class="status" id="status">⏳ Đang chờ thanh toán...</div>
     </div>
@@ -142,6 +143,7 @@ const paymentPending=document.getElementById('paymentPending');
 const paymentPaid=document.getElementById('paymentPaid');
 const paidAmount=document.getElementById('paidAmount');
 let statusTimer=null;
+let currentCode='';
 
 messageInput.addEventListener('input',()=>count.textContent=messageInput.value.length);
 
@@ -170,22 +172,40 @@ async function createDonation(name,amount,message){
   return d;
 }
 
+function resetPaymentUI(){
+  if(statusTimer){
+    clearInterval(statusTimer);
+    statusTimer=null;
+  }
+
+  paymentPending.style.display='block';
+  paymentPaid.style.display='none';
+  statusEl.textContent='⏳ Đang chờ thanh toán...';
+  statusEl.className='status';
+  paidAmount.textContent='';
+}
+
 function showResult(d){
   const code=d.code,amount=Number(d.amount);
+  currentCode=code;
+
+  // Mỗi lần tạo mã mới phải reset trạng thái của mã trước.
+  // Nhờ vậy người dùng có thể tạo nhiều lượt donate liên tiếp
+  // mà không cần F5 trang.
+  resetPaymentUI();
+
   result.classList.add('show');
   codeEl.textContent=code;
   qrAmount.textContent=money(amount);
   qrCode.textContent=code;
   qr.src=qrUrl(amount,code);
-  statusEl.textContent='⏳ Đang chờ thanh toán...';
-  statusEl.className='status';
 
-  if(statusTimer) clearInterval(statusTimer);
   const started=Date.now();
 
   statusTimer=setInterval(async()=>{
     if(Date.now()-started>30*60*1000){
       clearInterval(statusTimer);
+      statusTimer=null;
       statusEl.textContent='⌛ Mã này đã hết thời gian theo dõi.';
       return;
     }
@@ -194,6 +214,7 @@ function showResult(d){
       const s=await r.json();
       if(s.ok&&s.status==='PAID'){
         clearInterval(statusTimer);
+        statusTimer=null;
         paymentPending.style.display='none';
         paymentPaid.style.display='block';
         paidAmount.textContent='Đã nhận '+money(s.actualAmount);
@@ -202,6 +223,14 @@ function showResult(d){
       }
     }catch(e){}
   },4000);
+}
+
+function focusNewDonation(){
+  // Chuẩn bị giao diện cho lượt mới và đưa người dùng về ô lời nhắn.
+  resetPaymentUI();
+  result.classList.remove('show');
+  messageInput.focus();
+  messageInput.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 form.addEventListener('submit',async e=>{
