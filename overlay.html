@@ -10,7 +10,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overf
 .alert{position:absolute;right:30px;bottom:30px;width:420px;padding:22px 24px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(242,231,255,.97));border:2px solid rgba(181,151,233,.55);box-shadow:0 18px 60px rgba(76,45,110,.28);opacity:0;visibility:hidden;transform:translateY(25px) scale(.96);transition:opacity .4s ease,transform .4s ease,visibility .4s}
 .alert.show{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
 .top{font-size:18px;font-weight:800;color:#7653b4}.amount{font-size:28px;font-weight:900;color:#9a6bd2;margin:6px 0 8px}.msg{font-size:18px;color:#49395a;line-height:1.45;word-break:break-word;white-space:pre-wrap}.small{font-size:12px;color:#8a7b9a;margin-top:10px}
-.setup{position:absolute;left:24px;top:24px;padding:12px 15px;border-radius:14px;background:rgba(255,255,255,.97);border:2px solid rgba(171,132,223,.5);box-shadow:0 12px 35px rgba(76,45,110,.18);color:#674d87;font-weight:800;cursor:pointer;display:none;z-index:10}
+.setup{position:absolute;left:24px;top:24px;padding:12px 15px;border-radius:14px;background:rgba(255,255,255,.98);border:2px solid rgba(171,132,223,.6);box-shadow:0 12px 35px rgba(76,45,110,.18);color:#674d87;font-weight:800;cursor:pointer;display:none;z-index:10}
 .setup.show{display:block}
 .error{position:absolute;left:24px;bottom:24px;max-width:520px;padding:9px 12px;border-radius:12px;background:rgba(255,236,240,.97);border:1px solid rgba(193,94,114,.25);color:#a34c61;font-size:12px;font-weight:700;display:none;z-index:9}
 .error.show{display:block}
@@ -37,6 +37,8 @@ let initialized=false;
 let queue=[];
 let busy=false;
 let hideTimer=null;
+const params=new URLSearchParams(location.search);
+let setupMode=params.get('setup')==='1';
 let ttsUnlocked=localStorage.getItem(UNLOCK_KEY)==='1';
 const alertEl=document.getElementById('alert');
 const audio=document.getElementById('ttsAudio');
@@ -58,8 +60,9 @@ function showError(text){
   errorBox.classList.add('show');
 }
 function refreshUnlockUI(){
-  unlockBtn.classList.toggle('show', !ttsUnlocked);
+  unlockBtn.classList.toggle('show', !ttsUnlocked || setupMode);
 }
+
 loadSeen();
 refreshUnlockUI();
 
@@ -76,6 +79,7 @@ async function unlockAudio(){
     audio.currentTime=0;
     audio.volume=1;
     ttsUnlocked=true;
+    setupMode=false;
     localStorage.setItem(UNLOCK_KEY,'1');
     refreshUnlockUI();
     showError('');
@@ -196,7 +200,6 @@ function testDonation(){
   playNext();
 }
 
-const params=new URLSearchParams(location.search);
 if(params.get('test')==='1'){
   initialized=true;
   setTimeout(testDonation,1200);
