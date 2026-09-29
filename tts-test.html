@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kiểm tra giọng TTS tiếng Việt</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f6efff;color:#4b3768;margin:0;padding:30px}
+.wrap{max-width:760px;margin:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 18px 55px rgba(76,45,110,.15)}
+h1{margin-top:0}textarea{width:100%;min-height:120px;padding:12px;border:1px solid #ddcff0;border-radius:14px;font:inherit}
+button{border:0;border-radius:12px;padding:12px 18px;background:#9b73dc;color:#fff;font-weight:800;cursor:pointer;margin:8px 6px 0 0}
+pre{background:#faf7ff;padding:14px;border-radius:14px;white-space:pre-wrap;word-break:break-word}.good{color:#3b8b67}.bad{color:#b34d64}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🔊 Kiểm tra TTS tiếng Việt</h1>
+<p>Trang này kiểm tra voice mà Chrome/OBS Browser có thể nhìn thấy.</p>
+<textarea id="text">Chúc bạn stream vui vẻ nha! Hôm nay chơi game thật hay nhé! 💜</textarea>
+<div><button id="refresh">Làm mới danh sách voice</button><button id="speak">🔊 Đọc thử</button></div>
+<pre id="result">Đang tải danh sách voice...</pre>
+</div>
+<script>
+const text=document.getElementById('text');
+const result=document.getElementById('result');
+
+function renderVoices(){
+  const voices=speechSynthesis.getVoices()||[];
+  const vi=voices.filter(v=>String(v.lang||'').toLowerCase().startsWith('vi'));
+  if(!vi.length){
+    result.className='bad';
+    result.textContent='Không tìm thấy voice tiếng Việt trong môi trường này.\\n\\nHãy cài Vietnamese TTS voice trong Windows rồi khởi động lại OBS.';
+    return;
+  }
+  result.className='good';
+  result.textContent='Voice tiếng Việt tìm thấy:\\n\\n'+vi.map(v=>`${v.name} — ${v.lang}`).join('\\n');
+}
+speechSynthesis.onvoiceschanged=renderVoices;
+renderVoices();
+document.getElementById('refresh').onclick=renderVoices;
+document.getElementById('speak').onclick=()=>{
+  const voices=speechSynthesis.getVoices()||[];
+  const voice=voices.find(v=>String(v.lang||'').toLowerCase()==='vi-vn')||voices.find(v=>String(v.lang||'').toLowerCase().startsWith('vi'));
+  if(!voice){alert('Không có voice tiếng Việt. Hãy cài Vietnamese TTS voice trong Windows.');return;}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text.value);
+  u.voice=voice;u.lang=voice.lang;u.rate=.95;u.pitch=1;u.volume=1;
+  speechSynthesis.speak(u);
+};
+</script>
+</body>
+</html>

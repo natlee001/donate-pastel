@@ -4,432 +4,144 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Donate Overlay</title>
-
 <style>
-*{
-  box-sizing:border-box;
-}
-
-html,body{
-  margin:0;
-  padding:0;
-  width:100%;
-  height:100%;
-  background:transparent;
-  overflow:hidden;
-  font-family:Arial,sans-serif;
-}
-
-.alert{
-  position:absolute;
-  right:30px;
-  bottom:30px;
-  width:420px;
-  padding:22px 24px;
-  border-radius:24px;
-
-  background:linear-gradient(
-    135deg,
-    rgba(255,255,255,.97),
-    rgba(242,231,255,.97)
-  );
-
-  border:2px solid rgba(181,151,233,.55);
-
-  box-shadow:
-    0 18px 60px rgba(76,45,110,.28);
-
-  opacity:0;
-  visibility:hidden;
-
-  transform:
-    translateY(25px)
-    scale(.96);
-
-  transition:
-    opacity .4s ease,
-    transform .4s ease,
-    visibility .4s;
-}
-
-.alert.show{
-  opacity:1;
-  visibility:visible;
-  transform:
-    translateY(0)
-    scale(1);
-}
-
-.top{
-  font-size:18px;
-  font-weight:800;
-  color:#7653b4;
-}
-
-.amount{
-  font-size:28px;
-  font-weight:900;
-  color:#9a6bd2;
-  margin:6px 0 8px;
-}
-
-.msg{
-  font-size:18px;
-  color:#49395a;
-  line-height:1.45;
-  word-break:break-word;
-}
-
-.small{
-  font-size:12px;
-  color:#8a7b9a;
-  margin-top:10px;
-}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:Arial,sans-serif}
+.alert{position:absolute;right:30px;bottom:30px;width:420px;padding:22px 24px;border-radius:24px;
+background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(242,231,255,.97));
+border:2px solid rgba(181,151,233,.55);box-shadow:0 18px 60px rgba(76,45,110,.28);
+opacity:0;visibility:hidden;transform:translateY(25px) scale(.96);transition:opacity .4s ease,transform .4s ease,visibility .4s}
+.alert.show{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.top{font-size:18px;font-weight:800;color:#7653b4}.amount{font-size:28px;font-weight:900;color:#9a6bd2;margin:6px 0 8px}
+.msg{font-size:18px;color:#49395a;line-height:1.45;word-break:break-word;white-space:pre-wrap}.small{font-size:12px;color:#8a7b9a;margin-top:10px}
+.test-badge{position:absolute;left:24px;top:20px;padding:8px 11px;border-radius:12px;background:rgba(255,230,245,.95);color:#8f4c73;font-size:12px;font-weight:800;display:none}
+body.test .test-badge{display:block}
 </style>
 </head>
-
 <body>
-
+<div class="test-badge">TEST MODE</div>
 <div class="alert" id="alert">
-
-  <div class="top" id="name">
-    💜 Có donate mới!
-  </div>
-
-  <div class="amount" id="amount">
-    0đ
-  </div>
-
-  <div class="msg" id="content">
-  </div>
-
-  <div class="small">
-    Cảm ơn bạn đã ủng hộ ✨
-  </div>
-
+  <div class="top" id="name">💜 Có donate mới!</div>
+  <div class="amount" id="amount">0đ</div>
+  <div class="msg" id="content"></div>
+  <div class="small">Cảm ơn bạn đã ủng hộ ✨</div>
 </div>
-
 <script>
-
-const API = '/api/latest';
-
-let lastDonationId =
-  localStorage.getItem('lastDonationId') || '';
-
-let initialized = !!lastDonationId;
-
-let busy = false;
-
-
-/* =========================
-   HIỂN THỊ DONATE
-========================= */
+const API='/api/latest';
+let lastDonationId=localStorage.getItem('donate_last_id')||'';
+let initialized=!!lastDonationId;
+let busy=false;
 
 function showDonation(data){
-
-  const name =
-    data.name || 'Một người bạn';
-
-  const amount =
-    Number(data.amount || 0)
-      .toLocaleString('vi-VN') + 'đ';
-
-  const content =
-    data.content || 'Đã gửi một khoản ủng hộ 💜';
-
-
-  document.getElementById('name')
-    .textContent =
-      '💜 ' + name + ' đã donate';
-
-  document.getElementById('amount')
-    .textContent = amount;
-
-  document.getElementById('content')
-    .textContent = content;
-
-
-  const alert =
-    document.getElementById('alert');
-
-  alert.classList.add('show');
-
-
-  /* Đọc nội dung donate */
-
-  speak(content);
-
-
-  /* Ẩn sau 10 giây */
-
-  setTimeout(() => {
-
-    alert.classList.remove('show');
-
-    busy = false;
-
-  },10000);
+  busy=true;
+  document.getElementById('name').textContent='💜 '+(data.name||'Một người bạn')+' đã donate';
+  document.getElementById('amount').textContent=Number(data.amount||0).toLocaleString('vi-VN')+'đ';
+  document.getElementById('content').textContent=data.content||'';
+  document.getElementById('alert').classList.add('show');
+  speak(data.content||'');
+  setTimeout(()=>{document.getElementById('alert').classList.remove('show');busy=false;},10000);
 }
 
+let voicesReady=false;
+function getVoices(){return speechSynthesis.getVoices()||[];}
+function findVietnameseVoice(){
+  const voices=getVoices();
+  return voices.find(v=>String(v.lang||'').toLowerCase()==='vi-vn')
+      ||voices.find(v=>String(v.lang||'').toLowerCase().startsWith('vi'))
+      ||voices.find(v=>/(^|\s)an($|\s|-)/i.test(String(v.name||''))&&/^vi/i.test(String(v.lang||'')))
+      ||null;
+}
+function refreshVoices(){voicesReady=true;}
+speechSynthesis.onvoiceschanged=refreshVoices;
+refreshVoices();
 
-/* =========================
-   TEXT TO SPEECH
-========================= */
+function waitForVietnameseVoice(timeout=3500){
+  const immediate=findVietnameseVoice();
+  if(immediate) return Promise.resolve(immediate);
 
-let voices = [];
-
-function loadVoices(){
-
-  voices = speechSynthesis.getVoices();
-
-  console.log(
-    'Available voices:',
-    voices.map(v => ({
-      name: v.name,
-      lang: v.lang
-    }))
-  );
+  return new Promise(resolve=>{
+    let done=false;
+    const finish=()=>{
+      if(done)return;
+      done=true;
+      clearInterval(timer);
+      clearTimeout(stop);
+      resolve(findVietnameseVoice());
+    };
+    const timer=setInterval(()=>{
+      const v=findVietnameseVoice();
+      if(v) finish();
+    },120);
+    const stop=setTimeout(finish,timeout);
+  });
 }
 
-speechSynthesis.onvoiceschanged = loadVoices;
-
-loadVoices();
-
-
-function speak(text){
-
-  if(!text) return;
-
+async function speak(text){
+  if(!text)return;
   try{
+    const voice=await waitForVietnameseVoice();
+
+    // Never speak with an English fallback.
+    if(!voice){
+      console.warn('Không có voice tiếng Việt. Cài Vietnamese TTS voice trên Windows rồi khởi động lại OBS.');
+      return;
+    }
 
     speechSynthesis.cancel();
-
-    const utterance =
-      new SpeechSynthesisUtterance(text);
-
-    // Tìm voice tiếng Việt thật sự
-    let vietnameseVoice =
-      voices.find(v =>
-        v.lang &&
-        v.lang.toLowerCase() === 'vi-vn'
-      );
-
-    // Nếu không có vi-VN thì tìm mọi voice bắt đầu bằng vi
-    if(!vietnameseVoice){
-
-      vietnameseVoice =
-        voices.find(v =>
-          v.lang &&
-          v.lang.toLowerCase().startsWith('vi')
-        );
-
-    }
-
-    if(vietnameseVoice){
-
-      utterance.voice = vietnameseVoice;
-      utterance.lang = vietnameseVoice.lang;
-
-      console.log(
-        'Đang dùng giọng:',
-        vietnameseVoice.name,
-        vietnameseVoice.lang
-      );
-
-    }else{
-
-      // Không tìm thấy voice Việt
-      utterance.lang = 'vi-VN';
-
-      console.warn(
-        'Không tìm thấy giọng tiếng Việt trong OBS.'
-      );
-
-    }
-
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
-    speechSynthesis.speak(utterance);
-
-  }catch(error){
-
-    console.error(
-      'TTS error:',
-      error
-    );
-
+    const u=new SpeechSynthesisUtterance(text);
+    u.voice=voice;
+    u.lang=voice.lang||'vi-VN';
+    u.rate=.95;
+    u.pitch=1;
+    u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(e){
+    console.error('TTS error',e);
   }
-
 }
-
-/* =========================
-   KIỂM TRA DONATE
-========================= */
 
 async function checkDonation(){
-
-  if(busy) return;
-
+  if(busy)return;
   try{
-
-    const response =
-      await fetch(
-        API +
-        '?overlay=1&ts=' +
-        Date.now(),
-        {
-          cache:'no-store'
-        }
-      );
-
-    if(!response.ok){
-
-      console.log(
-        'API error:',
-        response.status
-      );
-
-      return;
-    }
-
-
-    const data =
-      await response.json();
-
-
-    const donation =
-      data.latest;
-
-
-    if(!donation){
-
-      return;
-    }
-
-
-    const id =
-      String(donation.id);
-
-
-    /*
-      Lần đầu mở overlay:
-      không đọc giao dịch cũ.
-    */
+    const r=await fetch(API+'?overlay=1&ts='+Date.now(),{cache:'no-store'});
+    if(!r.ok)return;
+    const d=await r.json();
+    const x=d.latest;
+    if(!x)return;
+    const id=String(x.id||'');
+    if(!id)return;
 
     if(!initialized){
-
-      lastDonationId = id;
-
-      localStorage.setItem(
-        'lastDonationId',
-        id
-      );
-
-      initialized = true;
-
-      console.log(
-        'Đã ghi nhận giao dịch hiện tại.'
-      );
-
+      lastDonationId=id;
+      localStorage.setItem('donate_last_id',id);
+      initialized=true;
       return;
     }
+    if(id===lastDonationId)return;
 
-
-    /*
-      Nếu là giao dịch mới
-    */
-
-    if(id === lastDonationId){
-
-      return;
-    }
-
-
-    lastDonationId = id;
-
-    localStorage.setItem(
-      'lastDonationId',
-      id
-    );
-
-
-    showDonation(donation);
-
-
-  }catch(error){
-
-    console.log(
-      'Không thể kiểm tra donate:',
-      error
-    );
-
-  }
-
+    lastDonationId=id;
+    localStorage.setItem('donate_last_id',id);
+    showDonation(x);
+  }catch(e){}
 }
-
-
-/* =========================
-   TEST MODE
-========================= */
 
 function testDonation(){
-
-  const testData = {
-
-    id:'TEST-' + Date.now(),
-
+  showDonation({
+    id:'TEST-'+Date.now(),
     name:'Na',
-
     amount:50000,
-
-    content:
-      'Chúc bạn stream vui vẻ nha! 💜'
-
-  };
-
-
-  showDonation(testData);
-
+    content:'Chúc bạn stream vui vẻ nha! 💜 Hôm nay chơi game thật hay nhé!'
+  });
 }
 
-
-/* =========================
-   KHỞI ĐỘNG
-========================= */
-
-const params =
-  new URLSearchParams(
-    window.location.search
-  );
-
-
-/*
-  Nếu URL có ?test=1
-  thì hiện donate giả lập.
-*/
-
-if(params.get('test') === '1'){
-
-  setTimeout(() => {
-
-    testDonation();
-
-  },1000);
-
+const params=new URLSearchParams(location.search);
+if(params.get('test')==='1'){
+  document.body.classList.add('test');
+  setTimeout(testDonation,1200);
 }else{
-
   checkDonation();
-
-  setInterval(
-    checkDonation,
-    3000
-  );
-
+  setInterval(checkDonation,3000);
 }
-
 </script>
-
 </body>
 </html>

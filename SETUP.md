@@ -1,41 +1,92 @@
-# Donate pastel tím + SePay + Google Sheets + Vercel
+# Donate Pastel — Donate dài + mã DN + SePay + Google Sheets + Vercel + OBS
 
-Kiến trúc:
-SePay -> Vercel /api/sepay -> Google Apps Script -> Google Sheets
-OBS Browser Source -> /overlay.html -> Vercel /api/latest -> Google Apps Script -> Google Sheets
+## Luồng
+Người xem nhập lời nhắn dài trên trang Donate
+→ Vercel tạo mã DN + 6 ký tự
+→ Google Apps Script lưu PENDING
+→ QR tự điền TPBank + số tiền + mã DN
+→ người xem chuyển khoản
+→ SePay gửi webhook
+→ Apps Script ghép mã DN với lời nhắn dài
+→ PENDING thành PAID
+→ OBS lấy donate mới
+→ popup + TTS tiếng Việt.
 
-## 1. Google Sheet
-Tạo 1 Google Sheet mới. Vào Extensions > Apps Script. Dán nội dung apps-script/Code.gs.
-Đổi `CHANGE_THIS_SECRET` thành một chuỗi bí mật dài.
-Deploy > New deployment > Web app > Execute as Me > Who has access: Anyone.
-Copy URL `/exec`.
+## 1) Google Sheet
+Giữ các sheet:
+- `DONATE - GIAO DỊCH`
+- `DONATE - CHỜ THANH TOÁN`
 
-## 2. Vercel
-Upload project này lên GitHub rồi Import vào Vercel.
-Tạo Environment Variables:
-- SEPAY_API_KEY = API key bạn tạo trong SePay webhook
-- SHEETS_WEBAPP_URL = URL Apps Script /exec
-- SHEETS_SECRET = giống SECRET trong Code.gs
+Trong Apps Script, dán `apps-script/Code.gs`.
+Đổi `PASTE_SHEETS_SECRET_HERE` thành đúng giá trị của Vercel `SHEETS_SECRET`.
+Deploy lại Web app: Execute as Me / Who has access: Anyone.
 
-Redeploy.
+Không cần tạo spreadsheet mới.
 
-## 3. SePay
-Tạo webhook, event `Tiền vào`, URL:
-https://TEN-MIEN-VERCEL-CUA-BAN.vercel.app/api/sepay
-Chọn API Key và nhập đúng key. SePay yêu cầu endpoint production HTTPS; webhook hỗ trợ test-send. Nên bật retry và chống trùng theo transaction id.
+## 2) Vercel
+Giữ 3 Production variables:
+- `SEPAY_API_KEY`
+- `SHEETS_WEBAPP_URL`
+- `SHEETS_SECRET`
 
-## 4. Thông tin ngân hàng + QR SePay
-Trang đã được cấu hình sẵn cho:
-- Ngân hàng: TPBank
-- Số tài khoản: 10005680585
-- Chủ tài khoản: TA THI LE NA
+Không commit secret/API key vào GitHub.
 
-QR được tạo động bằng VietQR/SePay (`vietqr.app/img`), nên không cần tải ảnh QR lên repo. Khi người xem quét, ứng dụng ngân hàng sẽ tự điền ngân hàng + số tài khoản; người xem tự nhập số tiền và nội dung. SePay tài liệu hóa cách nhúng QR động tại: https://developer.sepay.vn/vi/tien-ich-khac/tao-qr-code
+## 3) SePay
+Webhook:
+- Event: Tiền vào
+- URL: `https://donate-pastel.vercel.app/api/sepay`
+- Authentication: API Key
+- TPBank account: tài khoản bạn đã liên kết
+- Payment code structure: `DN` + 6 ký tự, số và chữ.
 
-## 5. OBS
-Thêm Browser Source:
-https://TEN-MIEN-VERCEL-CUA-BAN.vercel.app/overlay.html
-Gợi ý 500x300 hoặc 600x350, nền transparent.
-Overlay sẽ poll giao dịch mới mỗi 3 giây, hiện popup 10 giây và dùng SpeechSynthesis tiếng Việt để đọc nguyên văn content.
+SePay trích `code` từ nội dung theo cấu hình payment-code structure.
 
-Lưu ý: TTS trình duyệt/OBS phụ thuộc voice có sẵn trên máy. Nếu giọng không đọc được tiếng Việt, cài/đổi Vietnamese voice trong Windows hoặc dùng TTS dịch vụ ngoài.
+## 4) Trang Donate
+URL: `https://donate-pastel.vercel.app/`
+
+Người xem nhập:
+- Tên
+- Số tiền
+- Lời nhắn tối đa 2.000 ký tự
+
+Trang tạo mã DNXXXXXX và QR có sẵn số tiền + mã.
+
+## 5) OBS
+Browser Source:
+`https://donate-pastel.vercel.app/overlay.html`
+
+Khuyến nghị 1920 x 1080.
+
+Properties:
+- Tick `Control audio via OBS`.
+- Audio Mixer → Browser → `Monitoring and Output` nếu muốn vừa nghe vừa đưa vào stream.
+
+## 6) TTS tiếng Việt
+Overlay chỉ đọc nếu tìm thấy voice `vi-*`; nó KHÔNG fallback sang tiếng Anh.
+
+Windows hiện liệt kê voice tiếng Việt `An` trong các TTS voice được hỗ trợ. Có thể cài thêm voice tiếng Việt từ phần quản lý giọng nói của Windows. Sau khi cài, khởi động lại OBS.
+
+Test voice:
+`https://donate-pastel.vercel.app/tts-test.html`
+
+Nếu trang test không liệt kê voice tiếng Việt, hãy cài Vietnamese TTS voice trước.
+
+## 7) Test overlay
+`https://donate-pastel.vercel.app/overlay.html?test=1`
+
+## 8) Test webhook
+SePay → Webhooks → Gửi thử. Payload test có thể có `id=0`; code xử lý `0` hợp lệ.
+
+## 9) Thử giao dịch thật
+Sau khi webhook test đã thành công, tạo một lượt donate trên trang, quét QR và chuyển khoản thật một khoản nhỏ.
+
+Khi SePay nhận giao dịch:
+- `DONATE - GIAO DỊCH` ghi log ngân hàng.
+- `DONATE - CHỜ THANH TOÁN` đổi PENDING → PAID.
+- Trang Donate cập nhật trạng thái.
+- OBS lấy lời nhắn dài từ bản ghi PAID và hiển thị/đọc.
+
+## Thông tin ngân hàng
+TPBank
+STK: 10005680585
+Chủ tài khoản: TA THI LE NA
