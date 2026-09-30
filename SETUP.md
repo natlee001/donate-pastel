@@ -106,3 +106,12 @@ Lưu ý: đây là dịch vụ online của Edge TTS thông qua thư viện Node
 
 ## OBS TTS audio unlock
 The overlay uses server-generated Vietnamese MP3 audio. The first time you use the OBS Browser Source, open the Browser Source context menu -> Interact and click the purple/white “Bấm một lần để bật âm thanh donate” button once. After that, the overlay stores the unlocked state locally and future TTS alerts can play automatically. Keep Browser Source -> Control audio via OBS enabled. For cleaner audio routing, Browser can stay Monitor Off because the Browser channel itself is sent to the stream.
+
+## OBS – Donate gần đây
+
+Sau khi deploy Vercel, thêm một Browser Source trong OBS và dùng URL:
+
+`https://donate-pastel.vercel.app/recent.html`
+
+Không chọn **Local file** cho overlay này. Trang `recent.html` gọi `/api/latest` cùng domain nên sẽ tự lấy donate mới nhất và cập nhật khoảng mỗi 3 giây.
+

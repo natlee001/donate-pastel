@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Donate Gần Đây</title>
+<style>
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:transparent;
+  overflow:hidden;
+  font-family:Arial,sans-serif;
+}
+.wrap{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:8px;
+}
+.title{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 16px;
+  border-radius:999px;
+  background:rgba(113,66,174,.94);
+  color:#fff;
+  box-shadow:0 5px 16px rgba(0,0,0,.28);
+  font-size:16px;
+  font-weight:800;
+  line-height:1;
+  white-space:nowrap;
+}
+.card{
+  margin-top:9px;
+  max-width:96%;
+  padding:8px 15px;
+  border-radius:12px;
+  background:rgba(255,255,255,.96);
+  color:#49395a;
+  box-shadow:0 5px 16px rgba(0,0,0,.22);
+  font-size:16px;
+  line-height:1.35;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  opacity:0;
+  transform:translateY(7px);
+  transition:opacity .3s ease,transform .3s ease;
+}
+.card.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.name{color:#7653b4;font-weight:800}
+.amount{color:#9a6bd2;font-weight:900}
+.dot{color:#a08eaf;margin:0 7px}
+.content{font-weight:500}
+.error{
+  display:none;
+  color:#fff;
+  background:rgba(170,65,85,.9);
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:11px;
+  margin-top:6px;
+}
+.error.show{display:block}
+@media(max-width:700px){
+  .title{font-size:14px}
+  .card{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">💜 DONATE GẦN ĐÂY</div>
+  <div class="card" id="card">
+    <span class="name" id="name"></span>
+    <span class="dot">•</span>
+    <span class="amount" id="amount"></span>
+    <span class="dot">•</span>
+    <span class="content" id="content"></span>
+  </div>
+  <div class="error" id="error"></div>
+</div>
+
+<script>
+const API='/api/latest';
+const card=document.getElementById('card');
+const nameEl=document.getElementById('name');
+const amountEl=document.getElementById('amount');
+const contentEl=document.getElementById('content');
+const errorEl=document.getElementById('error');
+
+let lastId='';
+
+function money(v){
+  return Number(v||0).toLocaleString('vi-VN')+'đ';
+}
+
+function render(item, animate){
+  if(!item) return;
+
+  const id=String(item.id||item.code||'');
+  nameEl.textContent=item.name||'Một người bạn';
+  amountEl.textContent=money(item.amount);
+  contentEl.textContent=item.content ? '"' + item.content + '"' : '';
+
+  if(animate && id!==lastId){
+    card.classList.remove('show');
+    setTimeout(()=>card.classList.add('show'),50);
+  }else{
+    card.classList.add('show');
+  }
+
+  lastId=id;
+}
+
+async function check(){
+  try{
+    const r=await fetch(API+'?ts='+Date.now(),{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+
+    const d=await r.json();
+    const item=d && d.latest ? d.latest : null;
+
+    if(item) render(item,true);
+
+    errorEl.classList.remove('show');
+  }catch(e){
+    console.error('Donate recent error:',e);
+    // Không hiện lỗi trên livestream; chỉ log ra console.
+  }
+}
+
+check();
+setInterval(check,3000);
+</script>
+</body>
+</html>
